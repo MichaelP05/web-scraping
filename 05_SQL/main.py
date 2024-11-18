@@ -1,6 +1,7 @@
 import requests
 import hashlib
 import re
+import xml.etree.ElementTree as ET
 import csv, json, sqlite3
 import os
 
@@ -29,7 +30,6 @@ def make_joblist_with_url(url:str, content:list) -> list:
     
 
 def get_content(url):
-    
     name = os.path.join(os.getcwd(), hashlib.md5(url.encode('utf-8')).hexdigest())
     try:
         with open(name, 'r') as f:
@@ -62,6 +62,19 @@ def into_json(data: list) -> None:
 
     except Exception as e:
         print(f"Помилка при записі в JSON: {e}")
+
+def into_xml(data: list) -> None:
+    filename = 'result.xml'
+
+    root = ET.Element('JobList')
+    for item in data:
+        position = ET.SubElement(root, 'Position')
+        ET.SubElement(position, 'title').text = item["title"]
+        ET.SubElement(position, 'url').text = item["url"]
+        
+    tree = ET.ElementTree(root)
+    tree.write(filename, encoding='utf-8', xml_declaration=True)
+
 
 def write_into_sql(fn, data: list) -> None:
     
@@ -140,6 +153,7 @@ if __name__ == '__main__':
     job_list = make_joblist_with_url(url, get_content(url))  
     into_csv(job_list)
     into_json(job_list)
+    into_xml(job_list)
     write_into_sql('result.db', job_list)
     read_from_sql('result.db')
     # up_to_date_sql('result.db', data)
